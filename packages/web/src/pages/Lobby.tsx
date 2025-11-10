@@ -43,7 +43,7 @@ export const Lobby = () => {
     <div className="card" style={{ maxWidth: '600px' }}>
       <div className="card-header" style={{ marginBottom: '1rem' }}>
         <h1>{currentLobby.name}</h1>
-        <p>Lobby ID: <span style={{ color: 'var(--text-primary)', userSelect: 'all' }}>{currentLobby.id}</span></p>
+        <p>Lobby ID: <strong style={{ color: 'var(--text-primary)', userSelect: 'all', background: 'rgba(0,0,0,0.2)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>{currentLobby.id}</strong></p>
       </div>
 
       <div style={{ marginTop: '2rem' }}>
@@ -52,7 +52,6 @@ export const Lobby = () => {
           <li><span>Show Type:</span> <span>{currentLobby.settings.showType}</span></li>
           <li><span>Total Rounds:</span> <span>{currentLobby.settings.totalRounds}</span></li>
           <li><span>Round Duration:</span> <span>{currentLobby.settings.roundDuration}s</span></li>
-          <li><span>Difficulty:</span> <span>{currentLobby.settings.difficulty}</span></li>
         </ul>
       </div>
 
