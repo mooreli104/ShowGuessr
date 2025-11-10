@@ -287,6 +287,29 @@ export class LobbyManager {
   }
 
   /**
+   * Resets a lobby to 'waiting' state after a game is finished.
+   * Can be called by the host from the 'finished' screen.
+   */
+  resetLobby(playerId: string): Lobby {
+    const lobbyId = this.playerLobbyMap.get(playerId);
+    if (!lobbyId) throw new Error('Player not in any lobby');
+
+    const lobby = this.lobbies.get(lobbyId);
+    if (!lobby) throw new Error('Lobby not found');
+
+    if (lobby.hostId !== playerId) {
+      throw new Error('Only the host can reset the lobby');
+    }
+
+    lobby.status = 'waiting';
+    lobby.currentRound = 0;
+    lobby.players.forEach(p => p.score = 0);
+    this.activeRounds.delete(lobbyId);
+
+    return lobby;
+  }
+
+  /**
    * Get lobby by ID
    */
   getLobby(lobbyId: string): Lobby | undefined {

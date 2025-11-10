@@ -10,9 +10,10 @@ export const Lobby = () => {
 
   const isHost = currentLobby?.hostId === playerId;
 
-  // Navigate to game when it starts (for non-host players)
+  // Navigate based on lobby status
   useEffect(() => {
-    if (currentLobby?.status === 'playing') {
+    const status = currentLobby?.status;
+    if (status === 'playing' || status === 'finished') {
       navigate('/game');
     }
   }, [currentLobby?.status, navigate]);
@@ -31,55 +32,49 @@ export const Lobby = () => {
 
   if (!currentLobby) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <div className="card">
         <p>Loading lobby...</p>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>{currentLobby.name}</h1>
-      <p>Lobby ID: {currentLobby.id}</p>
-      <p>Status: {currentLobby.status}</p>
+    <div className="card" style={{ maxWidth: '600px' }}>
+      <div className="card-header" style={{ marginBottom: '1rem' }}>
+        <h1>{currentLobby.name}</h1>
+        <p>Lobby ID: <span style={{ color: 'var(--text-primary)', userSelect: 'all' }}>{currentLobby.id}</span></p>
+      </div>
 
       <div style={{ marginTop: '2rem' }}>
-        <h2>Settings</h2>
-        <ul>
-          <li>Show Type: {currentLobby.settings.showType}</li>
-          <li>Max Players: {currentLobby.settings.maxPlayers}</li>
-          <li>Round Duration: {currentLobby.settings.roundDuration}s</li>
-          <li>Total Rounds: {currentLobby.settings.totalRounds}</li>
-          <li>Difficulty: {currentLobby.settings.difficulty}</li>
+        <h3 style={{ marginBottom: '1rem' }}>Settings</h3>
+        <ul className="settings-list">
+          <li><span>Show Type:</span> <span>{currentLobby.settings.showType}</span></li>
+          <li><span>Total Rounds:</span> <span>{currentLobby.settings.totalRounds}</span></li>
+          <li><span>Round Duration:</span> <span>{currentLobby.settings.roundDuration}s</span></li>
+          <li><span>Difficulty:</span> <span>{currentLobby.settings.difficulty}</span></li>
         </ul>
       </div>
 
       <div style={{ marginTop: '2rem' }}>
-        <h2>Players ({currentLobby.players.length}/{currentLobby.settings.maxPlayers})</h2>
-        <ul>
+        <h3 style={{ marginBottom: '1rem' }}>Players ({currentLobby.players.length}/{currentLobby.settings.maxPlayers})</h3>
+        <ul className="player-list">
           {currentLobby.players.map((player) => (
             <li key={player.id}>
-              {player.username} {player.isHost && '(Host)'} - Score: {player.score}
+              <span>{player.username} {player.isHost && <span className="host-tag">Host</span>}</span>
+              <span>{player.score} pts</span>
             </li>
           ))}
         </ul>
       </div>
 
       <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-        <button
-          onClick={handleLeaveLobby}
-          style={{ padding: '0.75rem 2rem' }}
-        >
+        <button onClick={handleLeaveLobby} className="button-secondary">
           Leave Lobby
         </button>
 
         {isHost && (
-          <button
-            onClick={handleStartGame}
-            disabled={currentLobby.players.length < 2}
-            style={{ padding: '0.75rem 2rem' }}
-          >
-            Start Game
+          <button onClick={handleStartGame} disabled={currentLobby.players.length < 2}>
+            {currentLobby.players.length < 2 ? 'Need more players' : 'Start Game'}
           </button>
         )}
       </div>

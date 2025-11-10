@@ -246,7 +246,7 @@ export class SocketController {
       const roundEndPayload: RoundEndPayload = {
         correctAnswer: round.showContent.title,
         leaderboard: [...lobby.players].sort((a, b) => b.score - a.score),
-        nextRoundIn: gameEnded ? undefined : 5
+        nextRoundIn: gameEnded ? undefined : 5 // Seconds until the next round
       };
 
       this.io.to(lobbyId).emit(SocketEvent.ROUND_END, roundEndPayload);

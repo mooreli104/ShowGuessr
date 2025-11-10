@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Player } from '@showguessr/shared';
 import { useGameStore } from '../stores/gameStore';
 import { useSocket } from '../hooks/useSocket';
+import { socketService } from '../services/socket';
 
 export const Game = () => {
   const navigate = useNavigate();
@@ -13,14 +15,33 @@ export const Game = () => {
     totalRounds,
     leaderboard,
     hasAnsweredCorrectly,
+    setLeaderboard,
   } = useGameStore();
-  const { submitAnswer } = useSocket();
+  const { submitAnswer, resetLobby, leaveLobby } = useSocket();
 
+  const isHost = currentLobby?.hostId === useGameStore.getState().playerId;
   const [answer, setAnswer] = useState('');
   const [timeLeft, setTimeLeft] = useState(roundDuration);
+  const [roundEnded, setRoundEnded] = useState(false);
+  const [correctAnswer, setCorrectAnswer] = useState('');
+
+  useEffect(() => {
+    const socket = socketService.getSocket();
+    if (!socket) return;
+
+    const handleRoundEnd = (payload: any) => {
+      setRoundEnded(true);
+      setCorrectAnswer(payload.correctAnswer);
+      setLeaderboard(payload.leaderboard);
+    };
+
+    socket.on('round_end', handleRoundEnd);
+    return () => { socket.off('round_end', handleRoundEnd); };
+  }, [setLeaderboard]);
 
   useEffect(() => {
     // Reset for new round
+    setRoundEnded(false);
     setAnswer('');
     setTimeLeft(roundDuration);
 
@@ -45,48 +66,110 @@ export const Game = () => {
     setAnswer(''); // Clear input after submission
   };
 
-  if (!currentLobby || !imageUrl) {
+  const handleBackToLobby = () => {
+    if (isHost) {
+      resetLobby();
+    }
+    // For non-hosts, the server will broadcast the lobby update,
+    // and the useEffect in Lobby.tsx will handle navigation.
+    // For the host, this ensures we navigate after resetting.
+    navigate('/lobby');
+  };
+
+  const handleLeaveGame = () => {
+    leaveLobby();
+    navigate('/');
+  };
+
+  if (!currentLobby) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <div className="card" style={{ textAlign: 'center' }}>
+        <p>Loading game...</p>
+      </div>
+    );
+  }
+
+  // Game Finished View
+  if (currentLobby.status === 'finished') {
+    const sortedPlayers = [...(leaderboard.length > 0 ? leaderboard : currentLobby.players)].sort((a: Player, b: Player) => b.score - a.score);
+    return (
+      <div className="card" style={{ maxWidth: '600px' }}>
+        <div className="card-header">
+          <h1>Game Over!</h1>
+          <p>Final Scores</p>
+        </div>
+        <ul className="player-list">
+          {sortedPlayers.map((player: Player, index: number) => (
+            <li key={player.id}>
+              <span>{index + 1}. {player.username}</span>
+              <span>{player.score} points</span>
+            </li>
+          ))}
+        </ul>
+        <button onClick={handleBackToLobby} style={{ marginTop: '2rem' }}>
+          {isHost ? 'Reset and Return to Lobby' : 'Back to Lobby'}
+        </button>
+      </div>
+    );
+  }
+
+  // Active Game View
+  if (!imageUrl) {
+    return (
+      <div className="card" style={{ textAlign: 'center' }}>
         <p>Waiting for game to start...</p>
       </div>
     );
   }
 
-  return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
-        <div>
-          <h1>Round {currentRound} / {totalRounds}</h1>
-          <p>Time Left: {timeLeft}s</p>
+  // Intermission View (between rounds)
+  if (roundEnded) {
+    return (
+      <div className="card" style={{ maxWidth: '600px', textAlign: 'center' }}>
+        <div className="card-header">
+          <h1>Round Over!</h1>
+          <p>The correct answer was:</p>
+          <h2 style={{ color: 'var(--success-color)', marginTop: '1rem' }}>{correctAnswer}</h2>
         </div>
-        <div>
-          <button onClick={() => navigate('/lobby')}>Back to Lobby</button>
-        </div>
+        <h3 style={{ marginBottom: '1rem' }}>Leaderboard</h3>
+        <ul className="player-list">
+          {leaderboard.map((player: Player, index: number) => (
+            <li key={player.id}>
+              <span>{index + 1}. {player.username}</span>
+              <span>{player.score} points</span>
+            </li>
+          ))}
+        </ul>
       </div>
+    );
+  }
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+  return (
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '2rem' }}>
         {/* Image Display */}
-        <div style={{ textAlign: 'center' }}>
+        <div className="card" style={{ padding: '1rem', textAlign: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2>Round {currentRound} / {totalRounds}</h2>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{timeLeft}s</div>
+          </div>
           <img
             src={imageUrl}
             alt="Guess this show"
-            style={{ maxWidth: '100%', maxHeight: '500px', borderRadius: '8px' }}
+            style={{ width: '100%', maxHeight: 'calc(100vh - 250px)', objectFit: 'contain', borderRadius: '8px' }}
           />
 
-          <form onSubmit={handleSubmitAnswer} style={{ marginTop: '2rem' }}>
+          <form onSubmit={handleSubmitAnswer} style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
             <input
               type="text"
               placeholder="Type the show name..."
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               disabled={timeLeft === 0 || hasAnsweredCorrectly}
-              style={{ width: '70%', padding: '0.75rem', fontSize: '1rem' }}
             />
             <button
               type="submit"
               disabled={!answer || timeLeft === 0 || hasAnsweredCorrectly}
-              style={{ padding: '0.75rem 2rem', marginLeft: '1rem', fontSize: '1rem' }}
+              style={{ width: 'auto' }}
             >
               {hasAnsweredCorrectly ? 'Correct!' : 'Submit'}
             </button>
@@ -94,31 +177,23 @@ export const Game = () => {
         </div>
 
         {/* Leaderboard */}
-        <div>
-          <h2>Leaderboard</h2>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
+        <div className="card">
+          <h2 style={{ marginBottom: '1rem', textAlign: 'center' }}>Leaderboard</h2>
+          <ul className="player-list">
             {(leaderboard.length > 0 ? leaderboard : currentLobby.players)
               .map((player, index) => (
-                <li
-                  key={player.id}
-                  style={{
-                    padding: '0.75rem',
-                    marginBottom: '0.5rem',
-                    background: '#f0f0f0',
-                    borderRadius: '4px',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>
-                      {index + 1}. {player.username}
-                    </span>
-                    <span>{player.score} pts</span>
-                  </div>
+                <li key={player.id}>
+                  <span>
+                    {index + 1}. {player.username}
+                  </span>
+                  <span>{player.score} pts</span>
                 </li>
               ))}
           </ul>
+          <button onClick={handleLeaveGame} className="button-secondary" style={{ marginTop: '2rem' }}>
+            Leave Game
+          </button>
         </div>
       </div>
-    </div>
   );
 };
