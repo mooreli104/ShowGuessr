@@ -38,6 +38,7 @@ export class SocketController {
       this.handleStartGame(socket);
       this.handleSubmitAnswer(socket);
       this.handleDisconnect(socket);
+      this.handleResetLobby(socket);
     });
   }
 
@@ -230,6 +231,23 @@ export class SocketController {
           this.endRound(lobby.id);
         }
 
+      } catch (error) {
+        socket.emit(SocketEvent.ERROR, { message: (error as Error).message });
+      }
+    });
+  }
+
+  /**
+   * Handle lobby reset by host
+   */
+  private handleResetLobby(socket: Socket) {
+    socket.on('reset_lobby', () => {
+      const playerId = this.socketPlayerMap.get(socket.id);
+      if (!playerId) return;
+
+      try {
+        const lobby = this.lobbyManager.resetLobby(playerId);
+        this.io.to(lobby.id).emit(SocketEvent.LOBBY_UPDATED, { lobby });
       } catch (error) {
         socket.emit(SocketEvent.ERROR, { message: (error as Error).message });
       }

@@ -36,7 +36,7 @@ const socketController = new SocketController(io);
 socketController.initialize();
 
 // Start server
-httpServer.listen(config.port, () => {
+httpServer.listen(Number(config.port), '0.0.0.0', () => {
   console.log(`
   ┌─────────────────────────────────────┐
   │  ShowGuessr Server Running          │

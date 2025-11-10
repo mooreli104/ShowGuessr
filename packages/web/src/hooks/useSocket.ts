@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { Socket } from 'socket.io-client';
+import { useEffect, useCallback } from 'react';
 import {
   SocketEvent,
   CreateLobbyPayload,
@@ -118,7 +117,7 @@ export const useSocket = () => {
       socket.off(SocketEvent.GAME_END);
       socket.off(SocketEvent.ANSWER_RESULT);
     };
-  }, [playerId, setHasAnsweredCorrectly]);
+  }, [playerId, setHasAnsweredCorrectly, setConnected, setCurrentLobby, setCurrentRound, setError, setImageUrl, setLeaderboard, setPlayerId, setRoundInfo]);
 
   const createLobby = (lobbyName: string, username: string, settings: LobbySettings) => {
     const socket = socketService.getSocket();
@@ -178,6 +177,12 @@ export const useSocket = () => {
     socket.emit(SocketEvent.UPDATE_SETTINGS, settings);
   };
 
+  const resetLobby = useCallback(() => {
+    const socket = socketService.getSocket();
+    if (!socket) return;
+    socket.emit('reset_lobby');
+  }, []);
+
   return {
     createLobby,
     joinLobby,
@@ -185,5 +190,6 @@ export const useSocket = () => {
     startGame,
     submitAnswer,
     updateSettings,
+    resetLobby,
   };
 };
