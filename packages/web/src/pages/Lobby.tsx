@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Player, useGameStore } from '../stores/gameStore';
+import { Player } from '@showguessr/shared';
+import { useGameStore } from '../stores/gameStore';
 import { useSocket } from '../hooks/useSocket';
 
 export const Lobby = () => {
