@@ -12,7 +12,6 @@ export interface LobbySettings {
   roundDuration: number; // seconds
   totalRounds: number;
   showType: ShowType;
-  difficulty: 'easy' | 'medium' | 'hard';
 }
 
 // Player information
@@ -67,6 +66,7 @@ export enum SocketEvent {
   LEAVE_LOBBY = 'leave_lobby',
   UPDATE_SETTINGS = 'update_settings',
   START_GAME = 'start_game',
+  SKIP_ROUND = 'skip_round',
 
   // Lobby updates
   LOBBY_CREATED = 'lobby_created',
