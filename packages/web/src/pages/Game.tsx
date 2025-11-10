@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player } from '@showguessr/shared';
 import { useGameStore } from '../stores/gameStore';
@@ -39,6 +39,13 @@ export const Game = () => {
     return () => { socket.off('round_end', handleRoundEnd); };
   }, [setLeaderboard]);
 
+  // Redirect to home if state is lost on refresh
+  useEffect(() => {
+    if (!currentLobby) {
+      navigate('/');
+    }
+  }, [currentLobby, navigate]);
+
   useEffect(() => {
     // Reset for new round
     setRoundEnded(false);
@@ -65,8 +72,8 @@ export const Game = () => {
     submitAnswer(currentLobby.id, answer);
     setAnswer(''); // Clear input after submission
   };
-
-  const handleBackToLobby = () => {
+  
+  const handleBackToLobby = useCallback(() => {
     if (isHost) {
       resetLobby();
     }
@@ -74,7 +81,17 @@ export const Game = () => {
     // and the useEffect in Lobby.tsx will handle navigation.
     // For the host, this ensures we navigate after resetting.
     navigate('/lobby');
-  };
+  }, [isHost, navigate, resetLobby]);
+
+  // Automatically return to lobby after game ends
+  useEffect(() => {
+    if (currentLobby?.status === 'finished') {
+      const timer = setTimeout(() => {
+        handleBackToLobby();
+      }, 8000); // Wait 8 seconds on the "Game Over" screen
+      return () => clearTimeout(timer);
+    }
+  }, [currentLobby?.status, handleBackToLobby]);
 
   const handleLeaveGame = () => {
     leaveLobby();
@@ -145,12 +162,12 @@ export const Game = () => {
   }
 
   return (
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '2rem' }}>
+      <div className="game-layout">
         {/* Image Display */}
         <div className="card" style={{ padding: '1rem', textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h2>Round {currentRound} / {totalRounds}</h2>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{timeLeft}s</div>
+            <div className={`game-timer ${timeLeft <= 10 ? 'low-time' : ''}`}>{timeLeft}s</div>
           </div>
           <img
             src={imageUrl}
@@ -164,7 +181,7 @@ export const Game = () => {
               placeholder="Type the show name..."
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              disabled={timeLeft === 0 || hasAnsweredCorrectly}
+              disabled={timeLeft === 0 || hasAnsweredCorrectly} style={{flexGrow: 1}}
             />
             <button
               type="submit"
@@ -190,7 +207,7 @@ export const Game = () => {
                 </li>
               ))}
           </ul>
-          <button onClick={handleLeaveGame} className="button-secondary" style={{ marginTop: '2rem' }}>
+          <button onClick={handleLeaveGame} className="button-secondary" style={{ marginTop: '1rem' }}>
             Leave Game
           </button>
         </div>

@@ -11,6 +11,13 @@ export const Lobby = () => {
 
   const isHost = currentLobby?.hostId === playerId;
 
+  // Redirect to home if state is lost on refresh
+  useEffect(() => {
+    if (!currentLobby) {
+      navigate('/');
+    }
+  }, [currentLobby, navigate]);
+
   // Navigate based on lobby status
   useEffect(() => {
     const status = currentLobby?.status;
@@ -43,7 +50,7 @@ export const Lobby = () => {
     <div className="card" style={{ maxWidth: '600px' }}>
       <div className="card-header" style={{ marginBottom: '1rem' }}>
         <h1>{currentLobby.name}</h1>
-        <p>Lobby ID: <strong style={{ color: 'var(--text-primary)', userSelect: 'all', background: 'rgba(0,0,0,0.2)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>{currentLobby.id}</strong></p>
+        <p>Lobby ID: <strong style={{ color: 'var(--primary-accent)', userSelect: 'all', background: 'rgba(230, 57, 70, 0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>{currentLobby.id}</strong></p>
       </div>
 
       <div style={{ marginTop: '2rem' }}>

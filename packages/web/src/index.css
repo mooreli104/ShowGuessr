@@ -2,17 +2,42 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 
 :root {
-  --background-dark: #121212;
-  --background-light: #1e1e1e;
-  --primary-accent: #6a0dad;
-  --primary-hover: #7b1fa2;
-  --text-primary: #e0e0e0;
-  --text-secondary: #b0b0b0;
-  --border-color: #333333;
+  --font-family: 'Inter', sans-serif;
   --success-color: #4CAF50;
   --error-color: #f44336;
   --white: #ffffff;
-  --font-family: 'Inter', sans-serif;
+}
+
+/* Light Theme (Default) */
+[data-theme='light'] {
+  --background-gradient-start: #a8dadc;
+  --background-gradient-end: #f1faee;
+  --background-gradient-middle: #e63946;
+  --card-background: #fdfdff; /* Softer off-white */
+  --primary-accent: #e63946;
+  --primary-hover: #c22533;
+  --secondary-accent: #457b9d;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --border-color: #e0e0e0;
+  --input-background: #fff;
+  --list-item-background: #f8f9fa;
+}
+
+/* Dark Theme */
+[data-theme='dark'] {
+  --background-gradient-start: #1f005c;
+  --background-gradient-end: #0d1128;
+  --background-gradient-middle: #ff00c1;
+  --card-background: rgba(255, 255, 255, 0.05);
+  --primary-accent: #ff00c1;
+  --primary-hover: #00f6ff;
+  --secondary-accent: #00f6ff;
+  --text-primary: #ffffff;
+  --text-secondary: #a9a9d4;
+  --border-color: rgba(255, 255, 255, 0.2);
+  --input-background: rgba(0,0,0,0.2);
+  --list-item-background: rgba(0,0,0,0.2);
 }
 
 * {
@@ -23,7 +48,9 @@
 
 body {
   font-family: var(--font-family);
-  background-color: var(--background-dark);
+  background: linear-gradient(135deg, var(--background-gradient-start), var(--background-gradient-end), var(--background-gradient-middle));
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
   color: var(--text-primary);
   line-height: 1.6;
 }
@@ -38,12 +65,14 @@ body {
 }
 
 .card {
-  background-color: var(--background-light);
+  background: var(--card-background);
   padding: 2rem;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   width: 100%;
   border: 1px solid var(--border-color);
+  border-top: 5px solid var(--primary-accent);
+  animation: fadeIn 0.5s ease-out;
 }
 
 .card-header {
@@ -53,7 +82,7 @@ body {
 
 .card-header h1 {
   font-size: 2.5rem;
-  color: var(--white);
+  color: var(--primary-accent);
   margin-bottom: 0.5rem;
 }
 
@@ -76,7 +105,7 @@ input[type="number"],
 select {
   width: 100%;
   padding: 0.75rem;
-  background-color: var(--background-dark);
+  background-color: var(--input-background);
   border: 1px solid var(--border-color);
   border-radius: 4px;
   color: var(--text-primary);
@@ -89,7 +118,7 @@ input[type="number"]:focus,
 select:focus {
   outline: none;
   border-color: var(--primary-accent);
-  box-shadow: 0 0 0 2px rgba(106, 13, 173, 0.5);
+  box-shadow: 0 0 0 3px var(--primary-accent, 0.25);
 }
 
 button {
@@ -108,22 +137,24 @@ button {
   justify-content: center;
 }
 
-button:hover:not(:disabled) {
+button:not(:disabled):hover {
   background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 button:disabled {
-  background-color: #4a4a4a;
+  background: var(--primary-accent) !important; /* Use important to override other styles */
   cursor: not-allowed;
   opacity: 0.7;
 }
 
 .button-secondary {
-  background-color: #4a4a4a;
+  background: #6c757d;
 }
 
 .button-secondary:hover:not(:disabled) {
-  background-color: #5a5a5a;
+  background: #5a6268;
 }
 
 .divider {
@@ -157,7 +188,7 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background-color: var(--background-dark);
+  background-color: var(--list-item-background);
   border-radius: 4px;
   margin-bottom: 0.5rem;
   border: 1px solid var(--border-color);
@@ -186,4 +217,71 @@ button:disabled {
 
 .settings-list li:last-child {
   border-bottom: none;
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1400px;
+}
+
+.game-timer {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--secondary-accent);
+  background: rgba(69, 123, 157, 0.1);
+  padding: 0.25rem 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 123, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.game-timer.low-time {
+  color: var(--error-color);
+  background: rgba(244, 67, 54, 0.1);
+  border-color: rgba(244, 67, 54, 0.2);
+  animation: pulse 1s infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes gradientBG {
+	0% { background-position: 0% 50%; }
+	50% { background-position: 100% 50%; }
+	100% { background-position: 0% 50%; }
+}
+
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  background: var(--card-background);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px; /* Control the emoji size */
+  line-height: 1;  /* Normalize vertical alignment */
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.theme-toggle:hover {
+  transform: scale(1.1);
+  color: var(--primary-accent);
 }

@@ -16,6 +16,8 @@ interface GameState {
   totalRounds: number;
   leaderboard: Player[];
   hasAnsweredCorrectly: boolean;
+  theme: 'light' | 'dark';
+
 
   // UI state
   isConnected: boolean;
@@ -48,6 +50,8 @@ export const useGameStore = create<GameState>((set) => ({
   hasAnsweredCorrectly: false,
   isConnected: false,
   error: null,
+  theme: 'light',
+
 
   // Actions
   setPlayerId: (id) => set({ playerId: id }),
@@ -60,6 +64,7 @@ export const useGameStore = create<GameState>((set) => ({
   setConnected: (connected) => set({ isConnected: connected }),
   setError: (error) => set({ error }),
   setHasAnsweredCorrectly: (answered) => set({ hasAnsweredCorrectly: answered }),
+  toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
   resetGame: () => set({
     currentLobby: null,
     currentRound: 0,

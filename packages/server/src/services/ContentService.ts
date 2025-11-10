@@ -189,11 +189,14 @@ export class ContentService {
    * Check if an answer matches the correct show title
    */
   checkAnswer(userAnswer: string, correctAnswer: string, alternativeTitles?: string[]): boolean {
-    // A more forgiving normalization function that keeps essential characters
+    // A more forgiving normalization function. It removes non-alphanumeric characters
+    // but is less aggressive than the previous version.
     const normalize = (str: string) =>
       str.toLowerCase()
          .trim()
-         .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Remove non-essential punctuation
+         // Remove articles and common punctuation
+         .replace(/^(the|a|an)\s+/i, '')
+         .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()']/g, "")
          .replace(/\s+/g, ' '); // Collapse whitespace
     const normalizedUserAnswer = normalize(userAnswer);
 
@@ -207,14 +210,18 @@ export class ContentService {
         return true;
       }
 
-      // 2. If no exact match, use fuzzy matching (Levenshtein distance)
+      // 2. If no exact match, use a combination of fuzzy matching algorithms.
+      
+      // Levenshtein distance is good for typos.
       const distance = this.levenshteinDistance(normalizedUserAnswer, normalizedTitle);
+      const threshold = Math.max(1, Math.floor(normalizedTitle.length * 0.25));
+      if (distance <= threshold) { // If the edit distance is small, it's a match.
+        return true;
+      }
 
-      // Allow for a small number of errors based on title length.
-      // For example, a 10-letter word can have 2 errors. A 5-letter word can have 1.
-      const threshold = Math.max(1, Math.floor(normalizedTitle.length / 4));
-
-      if (distance <= threshold) {
+      // Jaccard similarity is good for matching word sets, even if order is different.
+      const jaccardSim = this.jaccardSimilarity(normalizedUserAnswer, normalizedTitle);
+      if (jaccardSim >= 0.75) { // If the word sets are 75% similar, it's a match.
         return true;
       }
     }
@@ -250,5 +257,23 @@ export class ContentService {
     }
 
     return matrix[b.length][a.length];
+  }
+
+  /**
+   * Calculates the Jaccard similarity between two strings based on their word sets.
+   * This is good for comparing strings where word order might differ or words are missing.
+   */
+  private jaccardSimilarity(a: string, b: string): number {
+    const setA = new Set(a.split(' '));
+    const setB = new Set(b.split(' '));
+
+    const intersection = new Set([...setA].filter(x => setB.has(x)));
+    const union = new Set([...setA, ...setB]);
+
+    if (union.size === 0) {
+      return 1; // Both strings are empty
+    }
+
+    return intersection.size / union.size;
   }
 }
