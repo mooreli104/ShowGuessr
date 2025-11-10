@@ -25,7 +25,6 @@ export const Home = () => {
       roundDuration,
       totalRounds,
       showType,
-      difficulty: 'medium',
     };
 
     setUsername(usernameInput);
@@ -49,6 +48,7 @@ export const Home = () => {
       </div>
 
       <div className="form-group">
+        <label>Your Username</label>
         <input
           type="text"
           placeholder="Enter your username"
