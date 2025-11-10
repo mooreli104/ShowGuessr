@@ -9,16 +9,16 @@ export class ContentService {
   /**
    * Fetch random show based on type
    */
-  async getRandomShow(showType: ShowType, difficulty: string): Promise<ShowContent> {
+  async getRandomShow(showType: ShowType, roundNumber: number): Promise<ShowContent> {
     switch (showType) {
       case ShowType.ANIME:
-        return this.getRandomAnime(difficulty);
+        return this.getRandomAnime(roundNumber);
       case ShowType.MOVIE:
-        return this.getRandomMovie(difficulty);
+        return this.getRandomMovie(roundNumber);
       case ShowType.CARTOON:
-        return this.getRandomCartoon(difficulty);
+        return this.getRandomCartoon(roundNumber);
       case ShowType.TV_SERIES:
-        return this.getRandomTVSeries(difficulty);
+        return this.getRandomTVSeries(roundNumber);
       default:
         throw new Error('Invalid show type');
     }
@@ -27,7 +27,7 @@ export class ContentService {
   /**
    * Fetch random anime from AniList API
    */
-  private async getRandomAnime(difficulty: string): Promise<ShowContent> {
+  private async getRandomAnime(roundNumber: number): Promise<ShowContent> {
     // GraphQL query for AniList
     const query = `
       query ($page: Int, $perPage: Int) {
@@ -51,7 +51,7 @@ export class ContentService {
     `;
 
     const variables = {
-      page: Math.floor(Math.random() * 10) + 1,
+      page: roundNumber, // Use round number for progressive difficulty
       perPage: 50
     };
 
@@ -82,13 +82,13 @@ export class ContentService {
   /**
    * Fetch random movie from TMDB API
    */
-  private async getRandomMovie(difficulty: string): Promise<ShowContent> {
+  private async getRandomMovie(roundNumber: number): Promise<ShowContent> {
     if (!config.tmdbApiKey) {
       throw new Error('TMDB API key not configured');
     }
 
     try {
-      const page = Math.floor(Math.random() * 20) + 1;
+      const page = roundNumber; // Use round number for progressive difficulty
       const response = await axios.get('https://api.themoviedb.org/3/movie/popular', {
         params: {
           api_key: config.tmdbApiKey,
@@ -117,13 +117,13 @@ export class ContentService {
   /**
    * Fetch random cartoon (animated TV series)
    */
-  private async getRandomCartoon(difficulty: string): Promise<ShowContent> {
+  private async getRandomCartoon(roundNumber: number): Promise<ShowContent> {
     if (!config.tmdbApiKey) {
       throw new Error('TMDB API key not configured');
     }
 
     try {
-      const page = Math.floor(Math.random() * 10) + 1;
+      const page = roundNumber; // Use round number for progressive difficulty
       const response = await axios.get('https://api.themoviedb.org/3/discover/tv', {
         params: {
           api_key: config.tmdbApiKey,
@@ -153,13 +153,13 @@ export class ContentService {
   /**
    * Fetch random TV series from TMDB API
    */
-  private async getRandomTVSeries(difficulty: string): Promise<ShowContent> {
+  private async getRandomTVSeries(roundNumber: number): Promise<ShowContent> {
     if (!config.tmdbApiKey) {
       throw new Error('TMDB API key not configured');
     }
 
     try {
-      const page = Math.floor(Math.random() * 20) + 1;
+      const page = roundNumber; // Use round number for progressive difficulty
       const response = await axios.get('https://api.themoviedb.org/3/tv/popular', {
         params: {
           api_key: config.tmdbApiKey,
@@ -189,18 +189,66 @@ export class ContentService {
    * Check if an answer matches the correct show title
    */
   checkAnswer(userAnswer: string, correctAnswer: string, alternativeTitles?: string[]): boolean {
-    const normalize = (str: string) => str.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
-    const normalizedAnswer = normalize(userAnswer);
-    const normalizedCorrect = normalize(correctAnswer);
+    // A more forgiving normalization function that keeps essential characters
+    const normalize = (str: string) =>
+      str.toLowerCase()
+         .trim()
+         .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Remove non-essential punctuation
+         .replace(/\s+/g, ' '); // Collapse whitespace
+    const normalizedUserAnswer = normalize(userAnswer);
 
-    if (normalizedAnswer === normalizedCorrect) {
-      return true;
-    }
+    const titlesToCheck = [correctAnswer, ...(alternativeTitles || [])].filter(Boolean);
 
-    if (alternativeTitles) {
-      return alternativeTitles.some(alt => normalize(alt) === normalizedAnswer);
+    for (const title of titlesToCheck) {
+      const normalizedTitle = normalize(title);
+
+      // 1. Check for an exact normalized match first
+      if (normalizedUserAnswer === normalizedTitle) {
+        return true;
+      }
+
+      // 2. If no exact match, use fuzzy matching (Levenshtein distance)
+      const distance = this.levenshteinDistance(normalizedUserAnswer, normalizedTitle);
+
+      // Allow for a small number of errors based on title length.
+      // For example, a 10-letter word can have 2 errors. A 5-letter word can have 1.
+      const threshold = Math.max(1, Math.floor(normalizedTitle.length / 4));
+
+      if (distance <= threshold) {
+        return true;
+      }
     }
 
     return false;
+  }
+
+  /**
+   * Calculates the Levenshtein distance between two strings.
+   * This measures the number of edits (insertions, deletions, substitutions)
+   * needed to change one string into the other.
+   */
+  private levenshteinDistance(a: string, b: string): number {
+    const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+
+    for (let i = 0; i <= a.length; i += 1) {
+      matrix[0][i] = i;
+    }
+
+    for (let j = 0; j <= b.length; j += 1) {
+      matrix[j][0] = j;
+    }
+
+    for (let j = 1; j <= b.length; j += 1) {
+      for (let i = 1; i <= a.length; i += 1) {
+        const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
+        matrix[j][i] = Math.min(
+          matrix[j][i - 1] + 1, // deletion
+          matrix[j - 1][i] + 1, // insertion
+          matrix[j - 1][i - 1] + indicator, // substitution
+        );
+      }
+    }
+
+    return matrix[b.length][a.length];
   }
 }
