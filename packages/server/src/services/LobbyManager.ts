@@ -185,7 +185,7 @@ export class LobbyManager {
 
     const showContent = await this.contentService.getRandomShow(
       lobby.settings.showType,
-      lobby.settings.difficulty
+      lobby.currentRound
     );
 
     const round: GameRound = {
