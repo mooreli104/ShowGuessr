@@ -8,7 +8,7 @@ import {
   RoundEndPayload,
   GameEndPayload
 } from '@showguessr/shared';
-import { LobbyManager } from '../services/LobbyManager';
+import { LobbyManager } from '../services/LobbyManager.js';
 
 /**
  * Handles all socket.io events
@@ -17,6 +17,7 @@ export class SocketController {
   private io: Server;
   private lobbyManager: LobbyManager;
   private socketPlayerMap: Map<string, string> = new Map(); // socketId -> playerId
+  private roundTimers: Map<string, NodeJS.Timeout> = new Map(); // lobbyId -> timer
 
   constructor(io: Server) {
     this.io = io;
@@ -172,9 +173,10 @@ export class SocketController {
         });
 
         // Schedule round end
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           this.endRound(lobby.id);
         }, lobby.settings.roundDuration * 1000);
+        this.roundTimers.set(lobby.id, timer);
 
       } catch (error) {
         socket.emit(SocketEvent.ERROR, { message: (error as Error).message });
@@ -209,6 +211,24 @@ export class SocketController {
 
         // Notify all players in the lobby
         this.io.to(lobby.id).emit(SocketEvent.ANSWER_RESULT, answerResult);
+
+        // If answer was correct and points were awarded, broadcast updated lobby state
+        if (result.correct && result.points > 0) {
+          this.io.to(lobby.id).emit(SocketEvent.LOBBY_UPDATED, { lobby });
+        }
+
+        // Check if all players have answered correctly
+        if (result.correct && this.lobbyManager.allPlayersAnswered(lobby.id)) {
+          // Clear the round timer
+          const timer = this.roundTimers.get(lobby.id);
+          if (timer) {
+            clearTimeout(timer);
+            this.roundTimers.delete(lobby.id);
+          }
+
+          // End the round immediately
+          this.endRound(lobby.id);
+        }
 
       } catch (error) {
         socket.emit(SocketEvent.ERROR, { message: (error as Error).message });
@@ -254,9 +274,10 @@ export class SocketController {
             });
 
             // Schedule next round end
-            setTimeout(() => {
+            const timer = setTimeout(() => {
               this.endRound(lobbyId);
             }, lobby.settings.roundDuration * 1000);
+            this.roundTimers.set(lobbyId, timer);
 
           } catch (error) {
             console.error('Error starting next round:', error);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,13 @@ export const LobbyScreen = ({ navigation }: any) => {
 
   const isHost = currentLobby?.hostId === playerId;
 
+  // Navigate to game when it starts (for all players)
+  useEffect(() => {
+    if (currentLobby?.status === 'playing') {
+      navigation.navigate('Game');
+    }
+  }, [currentLobby?.status, navigation]);
+
   const handleLeaveLobby = () => {
     leaveLobby();
     navigation.navigate('Home');
@@ -24,7 +31,7 @@ export const LobbyScreen = ({ navigation }: any) => {
   const handleStartGame = () => {
     if (isHost) {
       startGame();
-      navigation.navigate('Game');
+      // Navigation will happen via useEffect when status changes
     }
   };
 

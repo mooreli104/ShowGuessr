@@ -12,6 +12,7 @@ import { useGameStore } from '../stores/gameStore';
 
 export const useSocket = () => {
   const {
+    playerId,
     setPlayerId,
     setCurrentLobby,
     setCurrentRound,
@@ -20,6 +21,7 @@ export const useSocket = () => {
     setLeaderboard,
     setConnected,
     setError,
+    setHasAnsweredCorrectly,
   } = useGameStore();
 
   useEffect(() => {
@@ -89,6 +91,19 @@ export const useSocket = () => {
       // Show game over screen
     });
 
+    socket.on(SocketEvent.ANSWER_RESULT, (data: {
+      playerId: string;
+      username: string;
+      correct: boolean;
+      points: number;
+      timeToAnswer: number;
+    }) => {
+      // If this is the current player and they answered correctly, disable further guessing
+      if (data.playerId === playerId && data.correct && data.points > 0) {
+        setHasAnsweredCorrectly(true);
+      }
+    });
+
     return () => {
       socket.off(SocketEvent.CONNECT);
       socket.off(SocketEvent.DISCONNECT);
@@ -101,8 +116,9 @@ export const useSocket = () => {
       socket.off(SocketEvent.NEW_ROUND);
       socket.off(SocketEvent.ROUND_END);
       socket.off(SocketEvent.GAME_END);
+      socket.off(SocketEvent.ANSWER_RESULT);
     };
-  }, []);
+  }, [playerId, setHasAnsweredCorrectly]);
 
   const createLobby = (lobbyName: string, username: string, settings: LobbySettings) => {
     const socket = socketService.getSocket();

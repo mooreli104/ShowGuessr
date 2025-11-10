@@ -7,7 +7,7 @@ import {
   ShowContent,
   ShowType
 } from '@showguessr/shared';
-import { ContentService } from './ContentService';
+import { ContentService } from './ContentService.js';
 
 /**
  * Manages all game lobbies
@@ -216,11 +216,6 @@ export class LobbyManager {
       throw new Error('No active round');
     }
 
-    // Check if player already answered
-    if (round.correctAnswers.has(playerId)) {
-      return { correct: false, points: 0, timeToAnswer: 0 };
-    }
-
     const correct = this.contentService.checkAnswer(
       answer,
       round.showContent.title,
@@ -230,6 +225,11 @@ export class LobbyManager {
     const timeToAnswer = Date.now() - round.startTime.getTime();
 
     if (correct) {
+      // Check if player already answered correctly (to prevent score inflation)
+      if (round.correctAnswers.has(playerId)) {
+        return { correct: true, points: 0, timeToAnswer };
+      }
+
       // Points based on speed (faster = more points)
       const maxPoints = 1000;
       const timeRatio = Math.max(0, 1 - (timeToAnswer / (lobby.settings.roundDuration * 1000)));
@@ -247,6 +247,21 @@ export class LobbyManager {
     }
 
     return { correct: false, points: 0, timeToAnswer };
+  }
+
+  /**
+   * Check if all players have answered correctly
+   */
+  allPlayersAnswered(lobbyId: string): boolean {
+    const lobby = this.lobbies.get(lobbyId);
+    const round = this.activeRounds.get(lobbyId);
+
+    if (!lobby || !round) {
+      return false;
+    }
+
+    // Check if all players in the lobby have a correct answer
+    return lobby.players.length === round.correctAnswers.size;
   }
 
   /**

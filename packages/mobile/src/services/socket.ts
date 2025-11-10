@@ -2,7 +2,7 @@ import { io, Socket } from 'socket.io-client';
 import { SocketEvent } from '@showguessr/shared';
 
 // Update this to your server URL - use your local IP for mobile development
-const SERVER_URL = 'http://localhost:3001';
+const SERVER_URL = '192.168.1.11:3001';
 
 class SocketService {
   private socket: Socket | null = null;

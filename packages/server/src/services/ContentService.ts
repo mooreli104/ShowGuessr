@@ -190,7 +190,6 @@ export class ContentService {
    */
   checkAnswer(userAnswer: string, correctAnswer: string, alternativeTitles?: string[]): boolean {
     const normalize = (str: string) => str.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
-
     const normalizedAnswer = normalize(userAnswer);
     const normalizedCorrect = normalize(correctAnswer);
 

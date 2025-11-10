@@ -12,17 +12,16 @@ export const Game = () => {
     roundDuration,
     totalRounds,
     leaderboard,
+    hasAnsweredCorrectly,
   } = useGameStore();
   const { submitAnswer } = useSocket();
 
   const [answer, setAnswer] = useState('');
   const [timeLeft, setTimeLeft] = useState(roundDuration);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   useEffect(() => {
     // Reset for new round
     setAnswer('');
-    setHasSubmitted(false);
     setTimeLeft(roundDuration);
 
     const timer = setInterval(() => {
@@ -40,10 +39,10 @@ export const Game = () => {
 
   const handleSubmitAnswer = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!answer || !currentLobby || hasSubmitted) return;
+    if (!answer || !currentLobby || hasAnsweredCorrectly) return;
 
     submitAnswer(currentLobby.id, answer);
-    setHasSubmitted(true);
+    setAnswer(''); // Clear input after submission
   };
 
   if (!currentLobby || !imageUrl) {
@@ -81,15 +80,15 @@ export const Game = () => {
               placeholder="Type the show name..."
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              disabled={hasSubmitted || timeLeft === 0}
+              disabled={timeLeft === 0 || hasAnsweredCorrectly}
               style={{ width: '70%', padding: '0.75rem', fontSize: '1rem' }}
             />
             <button
               type="submit"
-              disabled={!answer || hasSubmitted || timeLeft === 0}
+              disabled={!answer || timeLeft === 0 || hasAnsweredCorrectly}
               style={{ padding: '0.75rem 2rem', marginLeft: '1rem', fontSize: '1rem' }}
             >
-              {hasSubmitted ? 'Submitted!' : 'Submit'}
+              {hasAnsweredCorrectly ? 'Correct!' : 'Submit'}
             </button>
           </form>
         </div>

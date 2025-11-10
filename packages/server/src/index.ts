@@ -40,8 +40,8 @@ httpServer.listen(config.port, () => {
   console.log(`
   ┌─────────────────────────────────────┐
   │  ShowGuessr Server Running          │
-  │  Port: ${config.port}                      │
-  │  Environment: ${config.nodeEnv}        │
+  │  Port: ${config.port}                       │
+  │  Environment: ${config.nodeEnv}         │
   └─────────────────────────────────────┘
   `);
 });

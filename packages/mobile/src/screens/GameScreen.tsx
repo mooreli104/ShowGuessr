@@ -21,16 +21,15 @@ export const GameScreen = ({ navigation }: any) => {
     roundDuration,
     totalRounds,
     leaderboard,
+    hasAnsweredCorrectly,
   } = useGameStore();
   const { submitAnswer } = useSocket();
 
   const [answer, setAnswer] = useState('');
   const [timeLeft, setTimeLeft] = useState(roundDuration);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   useEffect(() => {
     setAnswer('');
-    setHasSubmitted(false);
     setTimeLeft(roundDuration);
 
     const timer = setInterval(() => {
@@ -47,10 +46,10 @@ export const GameScreen = ({ navigation }: any) => {
   }, [currentRound, roundDuration]);
 
   const handleSubmitAnswer = () => {
-    if (!answer || !currentLobby || hasSubmitted) return;
+    if (!answer || !currentLobby || hasAnsweredCorrectly) return;
 
     submitAnswer(currentLobby.id, answer);
-    setHasSubmitted(true);
+    setAnswer(''); // Clear input after submission
   };
 
   if (!currentLobby || !imageUrl) {
@@ -98,18 +97,18 @@ export const GameScreen = ({ navigation }: any) => {
             placeholder="Type the show name..."
             value={answer}
             onChangeText={setAnswer}
-            editable={!hasSubmitted && timeLeft > 0}
+            editable={timeLeft > 0 && !hasAnsweredCorrectly}
           />
           <TouchableOpacity
             style={[
               styles.submitButton,
-              (!answer || hasSubmitted || timeLeft === 0) && styles.buttonDisabled,
+              (!answer || timeLeft === 0 || hasAnsweredCorrectly) && styles.buttonDisabled,
             ]}
             onPress={handleSubmitAnswer}
-            disabled={!answer || hasSubmitted || timeLeft === 0}
+            disabled={!answer || timeLeft === 0 || hasAnsweredCorrectly}
           >
             <Text style={styles.submitButtonText}>
-              {hasSubmitted ? 'Submitted!' : 'Submit'}
+              {hasAnsweredCorrectly ? 'Correct!' : 'Submit'}
             </Text>
           </TouchableOpacity>
         </View>

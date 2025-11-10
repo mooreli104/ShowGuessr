@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../stores/gameStore';
 import { useSocket } from '../hooks/useSocket';
@@ -10,6 +10,13 @@ export const Lobby = () => {
 
   const isHost = currentLobby?.hostId === playerId;
 
+  // Navigate to game when it starts (for non-host players)
+  useEffect(() => {
+    if (currentLobby?.status === 'playing') {
+      navigate('/game');
+    }
+  }, [currentLobby?.status, navigate]);
+
   const handleLeaveLobby = () => {
     leaveLobby();
     navigate('/');
@@ -18,7 +25,7 @@ export const Lobby = () => {
   const handleStartGame = () => {
     if (isHost) {
       startGame();
-      navigate('/game');
+      // Navigation will happen via useEffect when status changes
     }
   };
 
