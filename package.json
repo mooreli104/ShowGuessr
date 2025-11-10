@@ -1,0 +1,26 @@
+{
+  "name": "showguessr",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multiplayer show guessing game",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev --workspace=@showguessr/server",
+    "dev:web": "npm run dev --workspace=@showguessr/web",
+    "dev:mobile": "npm run start --workspace=@showguessr/mobile",
+    "install:all": "npm install && npm install --workspaces",
+    "build:server": "npm run build --workspace=@showguessr/server",
+    "build:web": "npm run build --workspace=@showguessr/web",
+    "build:mobile": "npm run build --workspace=@showguessr/mobile",
+    "build:shared": "npm run build --workspace=@showguessr/shared",
+    "verify": "node verify-setup.js"
+  },
+  "keywords": ["game", "multiplayer", "guessing"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
