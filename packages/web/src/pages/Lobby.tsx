@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGameStore } from '../stores/gameStore';
+import { Player, useGameStore } from '../stores/gameStore';
 import { useSocket } from '../hooks/useSocket';
 
 export const Lobby = () => {
@@ -58,7 +58,7 @@ export const Lobby = () => {
       <div style={{ marginTop: '2rem' }}>
         <h3 style={{ marginBottom: '1rem' }}>Players ({currentLobby.players.length}/{currentLobby.settings.maxPlayers})</h3>
         <ul className="player-list">
-          {currentLobby.players.map((player) => (
+          {currentLobby.players.map((player: Player) => (
             <li key={player.id}>
               <span>{player.username} {player.isHost && <span className="host-tag">Host</span>}</span>
               <span>{player.score} pts</span>

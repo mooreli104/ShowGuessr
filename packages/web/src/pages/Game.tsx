@@ -29,7 +29,7 @@ export const Game = () => {
     const socket = socketService.getSocket();
     if (!socket) return;
 
-    const handleRoundEnd = (payload: any) => {
+    const handleRoundEnd = (payload: { correctAnswer: string; leaderboard: Player[] }) => {
       setRoundEnded(true);
       setCorrectAnswer(payload.correctAnswer);
       setLeaderboard(payload.leaderboard);
@@ -181,7 +181,7 @@ export const Game = () => {
           <h2 style={{ marginBottom: '1rem', textAlign: 'center' }}>Leaderboard</h2>
           <ul className="player-list">
             {(leaderboard.length > 0 ? leaderboard : currentLobby.players)
-              .map((player, index) => (
+              .map((player: Player, index: number) => (
                 <li key={player.id}>
                   <span>
                     {index + 1}. {player.username}
